@@ -57,6 +57,31 @@ def check_port(host, port):
         return False
 
 
+def get_local_ip():
+    """Tries to determine the local IP address of the machine for LAN access."""
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        # Doesn't even have to be reachable
+        s.connect(('10.255.255.255', 1))
+        ip = s.getsockname()[0]
+    except Exception:
+        ip = '127.0.0.1'
+    finally:
+        s.close()
+    return ip
+
+
+def display_qr_code(url):
+    """Generates and prints a QR code for the given URL to the terminal."""
+    import qrcode  # Import is safe here due to the check in cli()
+    qr = qrcode.QRCode()
+    qr.add_data(url)
+    qr.make(fit=True)
+    print("📱 Scan the QR code to access the server on your local network:")
+    qr.print_tty()
+    print("-" * 40)
+
+
 def cli():
     parser = argparse.ArgumentParser(prog="jsweb", description="JsWeb CLI - A lightweight Python web framework.")
     parser.add_argument(
@@ -67,6 +92,7 @@ def cli():
     run_cmd = sub.add_parser("run", help="Run the JsWeb application in the current directory.")
     run_cmd.add_argument("--host", default="127.0.0.1", help="Host address to bind to (default: 127.0.0.1)")
     run_cmd.add_argument("--port", type=int, default=8000, help="Port number to listen on (default: 8000)")
+    run_cmd.add_argument("--qr", action="store_true", help="Display a QR code for the server's LAN address.")
 
     new_cmd = sub.add_parser("new", help="Create a new JsWeb project with a basic structure.")
     new_cmd.add_argument("name", help="The name of the new project")
@@ -74,12 +100,25 @@ def cli():
     args = parser.parse_args()
 
     if args.command == "run":
+        if args.qr:
+            try:
+                import qrcode
+            except ImportError:
+                print("❌ Error: The 'qrcode' library is required for the --qr feature.")
+                print("   Please install it by running: pip install \"jsweb[qr]\"")
+                return  # Exit gracefully
+
         if not os.path.exists("app.py"):
             print("❌ Error: Could not find 'app.py'. Ensure you are in a JsWeb project directory.")
             return
         if not check_port(args.host, args.port):
             print(f"❌ Error: Port {args.port} is already in use. Please specify a different port using --port.")
             return
+        if args.qr:
+            # For QR code, we need a specific LAN IP, not 0.0.0.0 or 127.0.0.1
+            lan_ip = get_local_ip()
+            url = f"http://{lan_ip}:{args.port}"
+            display_qr_code(url)
         try:
             import importlib.util
 

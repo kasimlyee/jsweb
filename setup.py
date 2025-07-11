@@ -52,6 +52,10 @@ setup(
             "jsweb=jsweb.cli:cli"
         ]
     },
+    extras_require={
+        "dev": ["watchdog", "websockets"],
+        "qr": ["qrcode[pil]"]  # Add this line for the QR feature
+    },
     project_urls={
         "Homepage": "https://github.com/Jones-peter/jsweb",
         "Bug Tracker": "https://github.com/Jones-peter/jsweb/issues",
