@@ -9,7 +9,7 @@ with open(os.path.join("jsweb", "__init__.py"), "r") as f:
             version = line.split("=")[1].strip().strip('\"')
             break
         else:
-            version = "0.1.0"
+            version = "0.2.0"
             break
 
 requirements = [
