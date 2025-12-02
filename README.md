@@ -3,14 +3,38 @@
   <img src="images/jsweb_logo.png" alt="JsWeb Logo" width="200">
 </a>
 </p>
+<p align="center">
+  
+<p align="center">
 
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
-[![PyPI version](https://img.shields.io/pypi/v/jsweb)](https://pypi.org/project/jsweb/)
+  <!-- Row 1 -->
+  <a href="https://pypi.org/project/jsweb/">
+    <img src="https://img.shields.io/pypi/v/jsweb" alt="PyPI version"/>
+  </a>
+  <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License"/>
 
+</p>
 
-[![Discord](https://gist.githubusercontent.com/cxmeel/0dbc95191f239b631c3874f4ccf114e2/raw/discord.svg)](https://discord.gg/sQHNheEW)
-[![Documentation](https://gist.githubusercontent.com/cxmeel/0dbc95191f239b631c3874f4ccf114e2/raw/documentation_learn.svg)](https://jsweb-framework.site)
-[![Sponsor](https://gist.githubusercontent.com/cxmeel/0dbc95191f239b631c3874f4ccf114e2/raw/github_sponsor.svg)](https://github.com/sponsors/Jones-peter)
+<p align="center">
+
+  <!-- Row 2 -->
+  <a href="https://discord.gg/sQHNheEW">
+    <img src="https://gist.githubusercontent.com/cxmeel/0dbc95191f239b631c3874f4ccf114e2/raw/discord.svg" alt="Discord"/>
+  </a>
+
+  <a href="https://jsweb-framework.site">
+    <img src="https://gist.githubusercontent.com/cxmeel/0dbc95191f239b631c3874f4ccf114e2/raw/documentation_learn.svg" alt="Documentation"/>
+  </a>
+
+  <a href="https://github.com/sponsors/Jones-peter">
+    <img src="https://gist.githubusercontent.com/cxmeel/0dbc95191f239b631c3874f4ccf114e2/raw/github_sponsor.svg" alt="Sponsor GitHub"/>
+  </a>
+
+  <a href="https://www.paypal.com/paypalme/jonespeter22">
+    <img src="https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif" alt="PayPal Sponsor"/>
+  </a>
+
+</p>
 
 
 # JsWeb: A Lightweight Python Web Framework
