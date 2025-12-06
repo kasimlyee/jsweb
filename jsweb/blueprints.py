@@ -3,17 +3,21 @@ class Blueprint:
     A self-contained, reusable component of a JsWeb application.
     Blueprints have their own routes which are later registered with the main app.
     """
-    def __init__(self, name, url_prefix=None):
+    def __init__(self, name, url_prefix=None, static_folder=None, static_url_path=None):
         """
         Initializes a new Blueprint.
 
         Args:
             name (str): The name of the blueprint.
             url_prefix (str, optional): A prefix to be added to all routes in this blueprint.
+            static_folder (str, optional): The folder for static files for this blueprint.
+            static_url_path (str, optional): The URL path for serving static files.
         """
         self.name = name
         self.url_prefix = url_prefix
         self.routes = []
+        self.static_folder = static_folder
+        self.static_url_path = static_url_path
 
     def add_route(self, path, handler, methods=None, endpoint=None):
         """

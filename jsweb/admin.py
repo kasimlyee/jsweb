@@ -4,10 +4,9 @@ import logging
 from jsweb.blueprints import Blueprint
 from jsweb.database import db_session
 from jsweb.forms import Form, StringField
-from jsweb.response import redirect, url_for, HTMLResponse
+from jsweb.response import redirect, url_for, render, HTMLResponse
 from jsweb.auth import admin_required, login_user
 from sqlalchemy.inspection import inspect
-from jinja2 import Environment, FileSystemLoader
 
 logger = logging.getLogger(__name__)
 
@@ -17,19 +16,18 @@ class Admin:
     """
     def __init__(self, app=None):
         self.models = {}
-        self.blueprint = Blueprint("admin", url_prefix="/admin")
+        # Define the path to the admin's own static files
+        admin_static_folder = os.path.join(os.path.dirname(__file__), 'admin_static')
         
-        template_path = os.path.join(os.path.dirname(__file__), "templates")
-        self.jinja_env = Environment(loader=FileSystemLoader(template_path))
-        self.jinja_env.globals['url_for'] = url_for
-
+        self.blueprint = Blueprint(
+            "admin", 
+            url_prefix="/admin",
+            static_folder=admin_static_folder,
+            static_url_path="/admin/static"
+        )
+        
         if app:
             self.init_app(app)
-
-    def _render(self, template_name, **context):
-        template = self.jinja_env.get_template(template_name)
-        context['admin_models'] = self.models.keys()
-        return HTMLResponse(template.render(**context))
 
     def init_app(self, app):
         self.app = app
@@ -40,14 +38,15 @@ class Admin:
         """Registers the main admin dashboard and handles login."""
         def index(request):
             error = None
-            # If user is already an admin, show the dashboard
             if request.user and getattr(request.user, 'is_admin', False):
-                # For now, just a welcome. We will add logs and tables later.
-                return self._render("admin/dashboard.html", request=request)
+                context = {
+                    "admin_models": self.models.keys(),
+                    "request": request
+                }
+                return render(request, "dashboard.html", context=context)
 
-            # Handle login form submission
             if request.method == "POST":
-                from models import User  # Local import to avoid circular dependency
+                from models import User
                 username = request.form.get("username")
                 password = request.form.get("password")
                 
@@ -60,8 +59,7 @@ class Admin:
                 else:
                     error = "Invalid credentials or not an admin."
             
-            # Show the login page
-            return self._render("admin/login.html", request=request, error=error)
+            return render(request, "login.html", context={"error": error, "request": request})
         
         self.blueprint.add_route("/", index, endpoint="index", methods=["GET", "POST"])
 
@@ -86,7 +84,15 @@ class Admin:
             records = db_session.query(model).all()
             columns = [c.name for c in model.__table__.columns]
             records_data = [r.to_dict() for r in records]
-            return self._render("admin/list.html", request=request, model_name=model_name, columns=columns, records=records_data, pk_name=pk_name)
+            context = {
+                "model_name": model_name,
+                "columns": columns,
+                "records": records_data,
+                "pk_name": pk_name,
+                "admin_models": self.models.keys(),
+                "request": request
+            }
+            return render(request, "list.html", context=context)
 
         @admin_required
         def add_view(request):
@@ -98,7 +104,22 @@ class Admin:
                     setattr(new_record, field_name, field.data)
                 new_record.save()
                 return redirect(url_for(request, f"admin.{model_name.lower()}_list"))
-            return self._render("admin/form.html", request=request, model_name=model_name, form=form, record=None)
+            
+            context = {
+                "model_name": model_name,
+                "form": form,
+                "record": None,
+                "admin_models": self.models.keys(),
+                "request": request,
+                "pk_name": pk_name
+            }
+            
+            # If it's an AJAX request, render only the partial
+            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return render(request, "form_partial.html", context=context)
+            
+            # Otherwise, render the full page
+            return render(request, "form.html", context=context)
 
         @admin_required
         def edit_view(request, **kwargs):
@@ -111,13 +132,28 @@ class Admin:
                     setattr(record, field_name, field.data)
                 record.save()
                 return redirect(url_for(request, f"admin.{model_name.lower()}_list"))
-            return self._render("admin/form.html", request=request, model_name=model_name, form=form, record=record)
+            
+            context = {
+                "model_name": model_name,
+                "form": form,
+                "record": record,
+                "admin_models": self.models.keys(),
+                "request": request,
+                "pk_name": pk_name
+            }
+
+            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return render(request, "form_partial.html", context=context)
+
+            return render(request, "form.html", context=context)
 
         @admin_required
         def delete_view(request, **kwargs):
-            record_id = kwargs.get(pk_name)
-            record = db_session.query(model).get(record_id)
-            record.delete()
+            if request.method == "POST":
+                record_id = kwargs.get(pk_name)
+                record = db_session.query(model).get(record_id)
+                if record:
+                    record.delete()
             return redirect(url_for(request, f"admin.{model_name.lower()}_list"))
 
         self.blueprint.add_route(f"/{model_name.lower()}", list_view, endpoint=f"{model_name.lower()}_list")

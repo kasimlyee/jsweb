@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block title %}Managing {{ model_name }}{% endblock %}
+
+{% block page_title %}Manage {{ model_name }}{% endblock %}
+
+{% block content %}
+    <div class="card">
+        <div class="card-header">
+            <span>{{ model_name }}s</span>
+            <a href="#" id="add-new-btn" class="btn"><i class="fas fa-plus"></i> Add New</a>
+        </div>
+        <div class="card-body">
+            <table id="model-table" class="display datatable">
+                <thead>
+                    <tr>
+                        {% for column in columns %}
+                            <th>{{ column }}</th>
+                        {% endfor %}
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in records %}
+                        <tr>
+                            {% for column in columns %}
+                                <td>{{ record[column] }}</td>
+                            {% endfor %}
+                            <td class="action-buttons">
+                                <a href="#" class="edit-btn" data-id="{{ record[pk_name] }}"><i class="fas fa-edit"></i></a>
+                                <a href="#" class="delete-btn" data-id="{{ record[pk_name] }}"><i class="fas fa-trash-alt"></i></a>
+                                <form id="delete-form-{{ record[pk_name] }}" action="{{ url_for('admin.' + model_name|lower + '_delete', **{pk_name: record[pk_name]}) }}" method="post" style="display: none;">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                </form>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="{{ columns|length + 1 }}">No records found.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal for Add/Edit Form -->
+    <div id="form-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add/Edit {{ model_name }}</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="form-container"></div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        var modal = $('#form-modal');
+
+        function showModal(url) {
+            $.get(url, function(data) {
+                $('#form-container').html(data);
+                modal.show();
+            });
+        }
+
+        $('#add-new-btn').on('click', function(e) {
+            e.preventDefault();
+            showModal("{{ url_for('admin.' + model_name|lower + '_add') }}");
+        });
+
+        $('.edit-btn').on('click', function(e) {
+            e.preventDefault();
+            var recordId = $(this).data('id');
+            showModal("{{ url_for('admin.' + model_name|lower + '_edit', **{pk_name: 0}) }}".replace('0', recordId));
+        });
+
+        $('.close, .modal').on('click', function(e) {
+            if ($(e.target).is('.modal, .close, .close span')) {
+                modal.hide();
+            }
+        });
+
+        $('.delete-btn').on('click', function(e) {
+            e.preventDefault();
+            var recordId = $(this).data('id');
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "You won't be able to revert this!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, delete it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $('#delete-form-' + recordId).submit();
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

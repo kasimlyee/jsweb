@@ -12,16 +12,25 @@ logger = logging.getLogger(__name__)
 # Global template environment, configured by the application
 _template_env = None
 
-def configure_template_env(template_path: str):
+def configure_template_env(template_paths: Union[str, List[str]]):
     """Configures the global Jinja2 template environment."""
     global _template_env
-    _template_env = Environment(loader=FileSystemLoader(template_path))
+    _template_env = Environment(loader=FileSystemLoader(template_paths))
 
 def url_for(req, endpoint: str, **kwargs) -> str:
     """
     Generates a URL for the given endpoint.
     """
-    # A special case for static files, which don't have a route
+    # Handle blueprint static files
+    if '.' in endpoint:
+        blueprint_name, static_endpoint = endpoint.split('.', 1)
+        if static_endpoint == 'static':
+            for bp in req.app.blueprints_with_static_files:
+                if bp.name == blueprint_name:
+                    filename = kwargs.get('filename', '')
+                    return f"{bp.static_url_path}/{filename}"
+
+    # A special case for main app static files
     if endpoint == 'static':
         static_url = getattr(req.app.config, "STATIC_URL", "/static")
         filename = kwargs.get('filename', '')

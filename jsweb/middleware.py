@@ -16,7 +16,6 @@ class Middleware:
 class CSRFMiddleware(Middleware):
     """Middleware to protect against Cross-Site Request Forgery attacks."""
     def __call__(self, environ, start_response):
-        # Get the single, shared request object from the environ
         req = environ['jsweb.request']
 
         if req.method in ("POST", "PUT", "PATCH", "DELETE"):
@@ -33,19 +32,28 @@ class CSRFMiddleware(Middleware):
         return self.app(environ, start_response)
 
 class StaticFilesMiddleware(Middleware):
-    def __init__(self, app, static_url, static_dir):
+    def __init__(self, app, static_url, static_dir, blueprint_statics=None):
         super().__init__(app)
         self.static_url = static_url
         self.static_dir = static_dir
+        self.blueprint_statics = blueprint_statics or []
 
     def __call__(self, environ, start_response):
-        # Get the single, shared request object from the environ
         req = environ['jsweb.request']
         
+        # Check blueprint static files first
+        for bp in self.blueprint_statics:
+            if bp.static_url_path and req.path.startswith(bp.static_url_path):
+                content, status, headers = serve_static(req.path, bp.static_url_path, bp.static_folder)
+                start_response(status, headers)
+                return [content if isinstance(content, bytes) else content.encode("utf-8")]
+
+        # Fallback to main static files
         if req.path.startswith(self.static_url):
             content, status, headers = serve_static(req.path, self.static_url, self.static_dir)
             start_response(status, headers)
             return [content if isinstance(content, bytes) else content.encode("utf-8")]
+            
         return self.app(environ, start_response)
 
 class DBSessionMiddleware(Middleware):

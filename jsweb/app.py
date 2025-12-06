@@ -15,13 +15,31 @@ class JsWebApp:
         self.router = Router()
         self.template_filters = {}
         self.config = config
+        self.blueprints_with_static_files = []
         self._init_from_config()  # Initial setup
 
     def _init_from_config(self):
         """Initializes components that depend on the config."""
+        template_paths = []
+
+        # Add the user's template folder
         if hasattr(self.config, "TEMPLATE_FOLDER") and hasattr(self.config, "BASE_DIR"):
-            template_path = os.path.join(self.config.BASE_DIR, self.config.TEMPLATE_FOLDER)
-            configure_template_env(template_path)
+            user_template_path = os.path.join(self.config.BASE_DIR, self.config.TEMPLATE_FOLDER)
+            if os.path.isdir(user_template_path):
+                template_paths.append(user_template_path)
+
+        # Add the library's main template folder
+        lib_template_path = os.path.join(os.path.dirname(__file__), "templates")
+        if os.path.isdir(lib_template_path):
+            template_paths.append(lib_template_path)
+            
+        # Add the library's admin template folder
+        admin_template_path = os.path.join(os.path.dirname(__file__), "admin_templates")
+        if os.path.isdir(admin_template_path):
+            template_paths.append(admin_template_path)
+
+        if template_paths:
+            configure_template_env(template_paths)
 
         if hasattr(self.config, "SECRET_KEY"):
             init_auth(self.config.SECRET_KEY, self._get_actual_user_loader())
@@ -48,9 +66,11 @@ class JsWebApp:
             if blueprint.url_prefix:
                 full_path = f"{blueprint.url_prefix.rstrip('/')}/{path.lstrip('/')}"
             
-            # Create a prefixed endpoint, e.g., "auth.login"
             full_endpoint = f"{blueprint.name}.{endpoint}"
             self.router.add_route(full_path, handler, methods, endpoint=full_endpoint)
+
+        if blueprint.static_folder:
+            self.blueprints_with_static_files.append(blueprint)
 
     def filter(self, name):
         def decorator(func):
@@ -82,7 +102,6 @@ class JsWebApp:
         return [b"<h1>404 Not Found</h1>"]
 
     def __call__(self, environ, start_response):
-        # Create the Request object ONCE and pass the app instance to it.
         req = Request(environ, self)
         environ['jsweb.request'] = req
 
@@ -101,7 +120,8 @@ class JsWebApp:
         
         handler = self._wsgi_app_handler
         handler = DBSessionMiddleware(handler)
-        handler = StaticFilesMiddleware(handler, static_url, static_dir)
+        # Pass blueprint static file info to the middleware
+        handler = StaticFilesMiddleware(handler, static_url, static_dir, blueprint_statics=self.blueprints_with_static_files)
         handler = CSRFMiddleware(handler)
 
         return handler(environ, start_response)

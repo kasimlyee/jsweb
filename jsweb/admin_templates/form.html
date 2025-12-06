@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Edit' if record else 'Add' }} {{ model_name }}{% endblock %}
+
+{% block page_title %}{{ 'Edit' if record else 'Add New' }} {{ model_name }}{% endblock %}
+
+{% block content %}
+    {% include "form_partial.html" %}
+{% endblock %}
