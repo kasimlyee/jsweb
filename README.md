@@ -6,33 +6,28 @@
 <p align="center">
   
 <p align="center">
-
-  <!-- Row 1 -->
   <a href="https://pypi.org/project/jsweb/">
     <img src="https://img.shields.io/pypi/v/jsweb" alt="PyPI version"/>
   </a>
-  <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License"/>
+  <img src="https://img.shields.io/badge/license-MIT-red.svg" alt="License"/>
+  <a href="https://pepy.tech/project/Jsweb">
+    <img src="https://static.pepy.tech/personalized-badge/jsweb?period=total&units=NONE&left_color=BLUE&right_color=GREEN&left_text=downloads" alt="PyPI version"/>
+  </a>
 </p>
 
 <p align="center">
-
-  <!-- Row 2 -->
   <a href="https://discord.gg/sQHNheEW">
     <img src="https://gist.githubusercontent.com/cxmeel/0dbc95191f239b631c3874f4ccf114e2/raw/discord.svg" alt="Discord"/>
   </a>
-
   <a href="https://jsweb-framework.site">
     <img src="https://gist.githubusercontent.com/cxmeel/0dbc95191f239b631c3874f4ccf114e2/raw/documentation_learn.svg" alt="Documentation"/>
   </a>
-
   <a href="https://github.com/sponsors/Jones-peter">
     <img src="https://gist.githubusercontent.com/cxmeel/0dbc95191f239b631c3874f4ccf114e2/raw/github_sponsor.svg" alt="Sponsor GitHub"/>
   </a>
-
   <a href="https://www.paypal.com/paypalme/jonespeter22">
     <img src="https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif" alt="PayPal Sponsor"/>
   </a>
-
 </p>
 
 
