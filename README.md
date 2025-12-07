@@ -30,7 +30,7 @@
   </a>
 </p>
 
-# JsWeb: The Blazing-Fast ASGI Web Framework
+# JsWeb: The Blazing-Fast ASGI Lightweight Python Web Framework
 
 **JsWeb** is a modern, high-performance Python web framework built from the ground up on the **ASGI** standard. It's designed for developers who want the speed of asynchronous programming with the simplicity of a classic framework.
 

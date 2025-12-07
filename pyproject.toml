@@ -4,32 +4,32 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "jsweb"
-version = "1.1.0"
+version = "1.2.0b1"
 description = "JsWeb - A lightweight and modern Python web framework designed for speed and simplicity."
 readme = "README.md"
-requires-python = ">=3.6"
+requires-python = ">=3.8"
 license = {text = "MIT"}
 authors = [
     { name = "Jones Peter", email = "jonespetersoftware@gmail.com" }
 ]
 
 keywords = [
-    "JsWeb", "Framework", "Web", "Python", "WSGI", "Web Server", "ORM",
-    "Database", "Routing", "Authentication", "Forms", "CLI"
+    "JsWeb", "Framework", "Web", "Python", "ASGI", "Web Server", "ORM",
+    "Database", "Routing", "Authentication", "Forms", "CLI", "Admin"
 ]
 
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.6",
-    "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
-    "Topic :: Internet :: WWW/HTTP :: WSGI :: Application",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Internet :: WWW/HTTP :: ASGI :: Application",
     "Topic :: Software Development :: Libraries :: Application Frameworks"
 ]
 
@@ -38,7 +38,8 @@ dependencies = [
     "sqlalchemy",
     "werkzeug",
     "itsdangerous",
-    "alembic"
+    "alembic",
+    "markupsafe"
 ]
 
 [project.optional-dependencies]
@@ -64,6 +65,7 @@ jsweb = [
     "templates/admin/*",
     "static/*.css",
     "static/*.png",
+    "static/*.js",
     "project_templates/*.jinja",
     "project_templates/alembic/*"
 ]
