@@ -1,5 +1,4 @@
 import re
-
 class Router:
     """
     Handles routing by mapping URL paths to view functions and endpoint names.
