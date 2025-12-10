@@ -83,11 +83,18 @@ class JsWebApp:
         try:
             handler, params = self.router.resolve(req.path, req.method)
         except NotFound as e:
-            return JSONResponse({"error": str(e)}, status_code=404)
+            response = JSONResponse({"error": str(e)}, status_code=404)
+            await response(scope, receive, send)
+            return
         except MethodNotAllowed as e:
-            return JSONResponse({"error": str(e)}, status_code=405)
+            response = JSONResponse({"error": str(e)}, status_code=405)
+            await response(scope, receive, send)
+            return
         except Exception as e:
-            return JSONResponse({"error": "Internal Server Error"}, status_code=500)
+            response = JSONResponse({"error": "Internal Server Error"}, status_code=500)
+            await response(scope, receive, send)
+            return
+
         if handler:
             # Support both sync and async handlers
             if asyncio.iscoroutinefunction(handler):
