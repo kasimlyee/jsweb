@@ -1,14 +1,12 @@
 """
-NestJS-style decorators for API documentation
+Decorators for API documentation
 
 These decorators allow developers to add rich OpenAPI documentation to their routes.
 """
 
-from functools import wraps
-from typing import Type, Dict, Any, List, Optional, Union
+from typing import Type, Dict, Any, List
 from .registry import (
     openapi_registry,
-    RouteMetadata,
     ResponseMetadata,
     RequestBodyMetadata,
     ParameterMetadata
@@ -22,7 +20,7 @@ def api_operation(
     deprecated: bool = False,
 ):
     """
-    Document an API operation (NestJS-style).
+    Document an API operation 
 
     This decorator should be placed closest to the route decorator.
 
@@ -122,14 +120,16 @@ def api_body(
     description: str = "",
     content_type: str = "application/json",
     required: bool = True,
-    examples: Dict[str, Any] = None
+    examples: Dict[str, Any] = None,
+    auto_validate: bool = True  # NEW: Enable/disable automatic validation
 ):
     """
-    Document request body (NestJS-style).
+    Document request body with AUTOMATIC VALIDATION (FastAPI-style).
 
-    The DTO class will be used for:
-    1. OpenAPI schema generation
-    2. Automatic request validation (via middleware)
+    By default, this decorator:
+    1. Generates OpenAPI schema documentation
+    2. Automatically validates incoming requests against the DTO
+    3. Provides validated data via req.validated_body
 
     Args:
         dto: Request body DTO class (JswebBaseModel subclass)
@@ -137,17 +137,27 @@ def api_body(
         content_type: MIME type
         required: Whether body is required
         examples: Example request bodies
+        auto_validate: Enable automatic validation (default: True)
 
     Example:
         @api_bp.route("/users", methods=["POST"])
         @api_body(CreateUserDto, description="User data to create")
         @api_response(201, UserDto, description="User created")
         async def create_user(req):
-            # req.validated_body will contain the validated DTO instance
-            data = await req.json()
-            return json({"user": {...}}, status=201)
+            # req.validated_body contains the validated DTO instance
+            # req.validated_data contains the dict representation
+            user_data = req.validated_data
+            return json({"user": user_data}, status=201)
+
+        # Disable auto-validation if needed:
+        @api_body(CreateUserDto, auto_validate=False)
+        async def create_user_manual(req):
+            data = await req.json()  # Manual handling
+            return json(data)
     """
     def decorator(handler):
+        from .auto_validation import validate_request_body
+
         metadata = openapi_registry.get_or_create_route(handler)
 
         # Get schema from DTO
@@ -168,10 +178,15 @@ def api_body(
             dto_class=dto  # Store for automatic validation
         )
 
-        # Mark handler with validation info (for middleware)
+        # Apply automatic validation unless disabled
+        if auto_validate and not getattr(handler, '_jsweb_disable_validation', False):
+            handler = validate_request_body(dto)(handler)
+
+        # Mark handler with validation info
         if not hasattr(handler, '_jsweb_validation'):
             handler._jsweb_validation = {}
         handler._jsweb_validation['body_dto'] = dto
+        handler._jsweb_validation['auto_validate'] = auto_validate
 
         return handler
     return decorator
@@ -241,7 +256,7 @@ def api_header(
     **schema_kwargs
 ):
     """
-    Document a header parameter (NestJS-style).
+    Document a header parameter 
 
     Args:
         name: Header name (e.g., 'Authorization', 'X-API-Key')
@@ -283,7 +298,7 @@ def api_header(
 
 def api_security(*schemes: str, scopes: List[str] = None):
     """
-    Apply security requirements to an operation (NestJS-style).
+    Apply security requirements to an operation 
 
     Args:
         *schemes: Security scheme names (must be registered)
@@ -320,7 +335,7 @@ def api_security(*schemes: str, scopes: List[str] = None):
 
 def api_tags(*tags: str):
     """
-    Add tags to an operation for grouping in documentation (NestJS-style).
+    Add tags to an operation for grouping in documentation 
 
     Args:
         *tags: Tag names
