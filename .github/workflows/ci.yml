@@ -7,9 +7,13 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      - uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GH_TOKEN }}
+      - uses: actions/setup-python@v4
         with:
           python-version: 3.x
       - run: pip install mkdocs-material
+      - run: git config --global user.name "GitHub Actions"
+      - run: git config --global user.email "actions@github.com"
       - run: mkdocs gh-deploy --force
