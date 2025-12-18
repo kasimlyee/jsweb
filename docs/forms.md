@@ -97,3 +97,11 @@ In your template, you can then render the form fields individually.
     <button type="submit">Log In</button>
 </form>
 ```
+
+## CSRF Protection
+
+JsWeb provides built-in CSRF protection. For traditional forms, you can include a hidden `csrf_token` field in your form, as shown in the example above.
+
+> **Note for the Next Version:**
+>
+> For SPAs and API-first applications, the next version of JsWeb will also support sending the CSRF token in the `X-CSRF-Token` HTTP header. This is the recommended approach for modern web applications.
