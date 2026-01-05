@@ -2,9 +2,20 @@
 
 JsWeb uses the [Jinja2](https://jinja.palletsprojects.com/) templating engine to render dynamic HTML. Jinja2 is a powerful and flexible templating language that allows you to embed logic and variables directly into your HTML files.
 
+## Table of Contents
+
+- [Rendering Templates](#rendering-templates)
+- [Template Variables](#template-variables)
+- [Control Structures](#control-structures)
+- [Template Filters](#template-filters)
+- [Template Inheritance](#template-inheritance)
+- [Macros](#macros)
+- [Custom Filters](#custom-filters)
+- [Best Practices](#best-practices)
+
 ## Rendering Templates
 
-To render a template, you can use the `render` function from the `jsweb.response` module.
+To render a template, use the `render` function from the `jsweb.response` module:
 
 ```python
 from jsweb.response import render
@@ -14,7 +25,10 @@ async def home(req):
     return render(req, "index.html", {"name": "World"})
 ```
 
-In this example, we're rendering the `index.html` template and passing a context dictionary with a `name` variable. The `render` function will look for the `index.html` template in the `templates` folder of your project.
+In this example, we're rendering the `index.html` template and passing a context dictionary with a `name` variable. The `render` function automatically looks for templates in the `templates` folder of your project.
+
+!!! tip "Template Location"
+    Templates must be in a `templates` folder in your project root. JsWeb automatically discovers and serves them.
 
 ## Template Variables
 
@@ -23,25 +37,44 @@ You can use variables in your templates by enclosing them in double curly braces
 ```html
 <!-- templates/index.html -->
 <h1>Hello, {{ name }}!</h1>
+<p>Welcome, {{ user.username }}!</p>
+<p>Items count: {{ items | length }}</p>
 ```
 
-When you render this template, `{{ name }}` will be replaced with the value of the `name` variable from the context dictionary.
+### Variable Examples
 
-## Template Logic
+```python
+# Python
+context = {
+    "name": "Alice",
+    "user": {"username": "alice", "email": "alice@example.com"},
+    "items": [1, 2, 3, 4, 5],
+    "count": 42
+}
+```
 
-Jinja2 also supports control structures like `if` statements and `for` loops.
+```html
+<!-- HTML Template -->
+{{ name }}              <!-- Output: Alice -->
+{{ user.username }}     <!-- Output: alice -->
+{{ count + 10 }}        <!-- Output: 52 -->
+```
 
-### `if` Statements
+## Control Structures
+
+### if Statements
 
 ```html
 {% if user %}
   <p>Hello, {{ user.name }}!</p>
+{% elif guest %}
+  <p>Welcome, guest!</p>
 {% else %}
   <p>Please log in.</p>
 {% endif %}
 ```
 
-### `for` Loops
+### for Loops
 
 ```html
 <ul>
@@ -51,50 +84,278 @@ Jinja2 also supports control structures like `if` statements and `for` loops.
 </ul>
 ```
 
+### Loop Variables
+
+Jinja2 provides special variables inside loops:
+
+```html
+<ul>
+  {% for item in items %}
+    <li>
+      {{ loop.index }}: {{ item }}
+      {% if loop.first %}(first item){% endif %}
+      {% if loop.last %}(last item){% endif %}
+    </li>
+  {% endfor %}
+</ul>
+```
+
+| Variable | Description |
+|----------|-------------|
+| `loop.index` | Current iteration (1-indexed) |
+| `loop.index0` | Current iteration (0-indexed) |
+| `loop.revindex` | Iterations remaining (descending) |
+| `loop.first` | True if first iteration |
+| `loop.last` | True if last iteration |
+| `loop.length` | Total number of items |
+
+### Filtering in Loops
+
+```html
+{% for user in users if user.active %}
+  <p>{{ user.name }}</p>
+{% endfor %}
+```
+
+## Template Filters
+
+Filters modify variables. Use the pipe (`|`) syntax:
+
+```html
+{{ "hello" | upper }}              <!-- Output: HELLO -->
+{{ "HELLO" | lower }}              <!-- Output: hello -->
+{{ "hello world" | title }}        <!-- Output: Hello World -->
+{{ items | length }}               <!-- Output: 3 -->
+{{ price | round(2) }}             <!-- Output: 19.99 -->
+{{ date | strftime('%Y-%m-%d') }} <!-- Output: 2024-01-05 -->
+```
+
+### Common Filters
+
+| Filter | Description | Example |
+|--------|-------------|---------|
+| `upper` | Convert to uppercase | `{{ text \| upper }}` |
+| `lower` | Convert to lowercase | `{{ text \| lower }}` |
+| `title` | Capitalize first letter of each word | `{{ text \| title }}` |
+| `capitalize` | Capitalize first letter | `{{ text \| capitalize }}` |
+| `length` | Get length | `{{ items \| length }}` |
+| `reverse` | Reverse a list | `{{ items \| reverse }}` |
+| `sort` | Sort a list | `{{ items \| sort }}` |
+| `join` | Join list items | `{{ items \| join(', ') }}` |
+| `default` | Provide default value | `{{ value \| default('N/A') }}` |
+| `abs` | Absolute value | `{{ -5 \| abs }}` |
+| `round` | Round number | `{{ 3.14159 \| round(2) }}` |
+| `int` | Convert to integer | `{{ "42" \| int }}` |
+| `string` | Convert to string | `{{ 42 \| string }}` |
+
+### Chaining Filters
+
+```html
+{{ "hello world" | upper | replace('WORLD', 'JSWEB') }}
+<!-- Output: HELLO JSWEB -->
+```
+
 ## Template Inheritance
 
-Template inheritance allows you to build a base template with common elements and then extend it in other templates.
+Template inheritance allows you to build a base template with common elements and extend it in other templates. This reduces code duplication.
 
-### `base.html`
+### Base Template (base.html)
 
 ```html
 <!DOCTYPE html>
 <html>
 <head>
-    <title>{% block title %}{% endblock %}</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}My Site{% endblock %}</title>
+    <link rel="stylesheet" href="{{ static('css/style.css') }}">
+    {% block extra_css %}{% endblock %}
 </head>
 <body>
+    <nav>
+        <a href="/">Home</a>
+        <a href="/about">About</a>
+        <a href="/contact">Contact</a>
+    </nav>
+    
     <div class="content">
         {% block content %}{% endblock %}
     </div>
+    
+    <footer>
+        <p>&copy; 2024 My Site. All rights reserved.</p>
+    </footer>
+    
+    {% block extra_js %}{% endblock %}
 </body>
 </html>
 ```
 
-### `index.html`
+### Child Template (index.html)
 
 ```html
 {% extends "base.html" %}
 
-{% block title %}Home{% endblock %}
+{% block title %}Home - My Site{% endblock %}
 
 {% block content %}
     <h1>Welcome to my site!</h1>
+    <p>This is the home page.</p>
 {% endblock %}
+```
+
+### Another Child Template (about.html)
+
+```html
+{% extends "base.html" %}
+
+{% block title %}About - My Site{% endblock %}
+
+{% block content %}
+    <h1>About Us</h1>
+    <p>Learn more about our site here.</p>
+{% endblock %}
+```
+
+!!! tip "Block Naming"
+    Use descriptive block names like `{% block title %}`, `{% block content %}`, `{% block extra_css %}` to make your templates clear and organized.
+
+## Macros
+
+Macros are reusable template functions. They help eliminate code duplication for complex HTML patterns.
+
+```html
+{# templates/macros.html #}
+
+{% macro render_user(user) %}
+    <div class="user-card">
+        <h3>{{ user.name }}</h3>
+        <p>Email: {{ user.email }}</p>
+        <p>Status: {% if user.active %}Active{% else %}Inactive{% endif %}</p>
+    </div>
+{% endmacro %}
+
+{% macro render_pagination(current_page, total_pages) %}
+    <nav class="pagination">
+        {% if current_page > 1 %}
+            <a href="?page=1">First</a>
+            <a href="?page={{ current_page - 1 }}">Previous</a>
+        {% endif %}
+        
+        <span>Page {{ current_page }} of {{ total_pages }}</span>
+        
+        {% if current_page < total_pages %}
+            <a href="?page={{ current_page + 1 }}">Next</a>
+            <a href="?page={{ total_pages }}">Last</a>
+        {% endif %}
+    </nav>
+{% endmacro %}
+```
+
+### Using Macros
+
+```html
+{% from 'macros.html' import render_user, render_pagination %}
+
+<div class="users">
+    {% for user in users %}
+        {{ render_user(user) }}
+    {% endfor %}
+</div>
+
+{{ render_pagination(current_page, total_pages) }}
 ```
 
 ## Custom Filters
 
-You can add your own custom filters to the Jinja2 environment using the `@app.filter()` decorator.
+Create custom filters to extend Jinja2's functionality:
 
 ```python
-@app.filter("uppercase")
-def uppercase_filter(s):
-    return s.upper()
+# app.py
+@app.filter("markdown")
+def markdown_filter(text):
+    import markdown
+    return markdown.markdown(text)
+
+@app.filter("slugify")
+def slugify_filter(text):
+    return text.lower().replace(' ', '-')
+
+@app.filter("currency")
+def currency_filter(value):
+    return f"${value:.2f}"
+
+@app.filter("ordinal")
+def ordinal_filter(n):
+    if n % 10 == 1 and n % 100 != 11:
+        return f"{n}st"
+    elif n % 10 == 2 and n % 100 != 12:
+        return f"{n}nd"
+    elif n % 10 == 3 and n % 100 != 13:
+        return f"{n}rd"
+    else:
+        return f"{n}th"
 ```
 
-You can then use this filter in your templates:
+### Using Custom Filters
 
 ```html
-{{ "hello" | uppercase }}  <!-- Renders as "HELLO" -->
+{{ "Hello World" | slugify }}        <!-- Output: hello-world -->
+{{ 19.99 | currency }}              <!-- Output: $19.99 -->
+{{ 21 | ordinal }}                  <!-- Output: 21st -->
+{{ "# Heading" | markdown }}        <!-- Output: <h1>Heading</h1> -->
 ```
+
+!!! tip "Filter Naming"
+    Use lowercase, descriptive names for your filters. Always test them before using in production.
+
+## Best Practices
+
+!!! warning "Security: XSS Prevention"
+    By default, Jinja2 does NOT auto-escape HTML. Be careful with user input:
+    
+    ```html
+    {# Good: escapes HTML #}
+    {{ user_input | escape }}
+    
+    {# Or use auto-escaping in Python #}
+    from markupsafe import escape
+    escaped = escape(user_input)
+    ```
+
+!!! tip "Keep Logic Simple"
+    Keep complex logic in Python, not templates:
+    
+    ```html
+    {# Bad: Complex logic in template #}
+    {% if user and user.is_active and user.role == 'admin' and user.permissions.can_edit %}
+    
+    {# Good: Simple check in template #}
+    {% if can_edit %}
+    ```
+
+!!! info "Performance"
+    Cache templates in production. JsWeb automatically handles this, but ensure `DEBUG=False` in production config.
+
+!!! tip "Organization"
+    Organize templates in subdirectories:
+    
+    ```
+    templates/
+    ├── base.html
+    ├── auth/
+    │   ├── login.html
+    │   └── register.html
+    ├── admin/
+    │   └── dashboard.html
+    └── macros.html
+    ```
+
+!!! note "Comments"
+    Use Jinja2 comments that won't appear in output:
+    
+    ```html
+    {# This is a comment #}
+    {# It won't appear in the rendered HTML #}
+    ```
+
